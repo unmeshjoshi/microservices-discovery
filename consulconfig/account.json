@@ -1,0 +1,18 @@
+{
+  "service": {
+    "name": "account",
+    "tags": [
+      "primary"
+    ],
+    "address": "",
+    "port": 8080,
+    "enableTagOverride": false,
+    "check": {
+      "id": "api",
+      "name": "HTTP API on port 8080",
+      "http": "http://localhost:8080/profile",
+      "interval": "10s",
+      "timeout": "1s"
+    }
+  }
+}
