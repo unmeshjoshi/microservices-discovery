@@ -28,7 +28,8 @@ class ZookeeperLocationService extends LocationService { outer =>
   override def register(registration: Registration): Future[RegistrationResult] = Future {
     val location = registration.location(new Networks().hostname())
     val serviceInstancePath = s"$cswRootPath/${location.connection.name}"
-    if (Option(zookeeper.exists(serviceInstancePath, false)) != None) {
+    val stat = zookeeper.exists(serviceInstancePath, false)
+    if (Option(stat) != None) {
       throw RegistrationFailed(registration.connection)
     }
 
@@ -96,7 +97,6 @@ class ZookeeperLocationService extends LocationService { outer =>
 
     def setWatcher(actorRef: ActorRef):Unit = {
       zookeeper.exists(s"${serviceInstancePath}", watchedEvent ⇒ {
-        println(s"GOT EVENT ${watchedEvent}")
         actorRef ! watchedEvent
         setWatcher(actorRef)
       })
@@ -128,7 +128,10 @@ class ZookeeperLocationService extends LocationService { outer =>
 
   override def find(connection: Connection): Future[Option[Location]] = ???
 
-  override def resolve(connection: Connection, within: FiniteDuration): Future[Option[Location]] = ???
+  override def resolve(connection: Connection, within: FiniteDuration): Future[Option[Location]] = Future {
+    val location = resolve(connection)
+    Option(location)
+  }
 
   override def list: Future[List[Location]] = ???
 
@@ -145,6 +148,6 @@ class ZookeeperLocationService extends LocationService { outer =>
 
 class LocationWatcher extends org.apache.zookeeper.Watcher {
   override def process(event: WatchedEvent): Unit = {
-    println("___________________________________________________________________________________" + event)
+
   }
 }

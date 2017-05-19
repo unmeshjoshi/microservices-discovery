@@ -5,9 +5,8 @@ import java.net.URI
 
 import akka.actor.{Actor, ActorPath, ActorSystem, Props}
 import akka.serialization.Serialization
-import akka.stream.{ActorMaterializer, KillSwitch}
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Keep
-import akka.stream.testkit.TestSubscriber
 import akka.stream.testkit.scaladsl.TestSink
 import akka.util.Timeout
 import com.servicediscovery.models.Connection.{AkkaConnection, HttpConnection}
@@ -33,7 +32,6 @@ class TestActor() extends Actor {
   override def receive: Receive = {
     case m@_ ⇒ {
       val response = s"Received ${m}"
-      println(response)
       response
     }
   }
@@ -44,7 +42,7 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
   test("Should register and resolve a http service") {
     val hostname = new Networks().hostname()
     val port = 9595
-    val prefix = "/trombone/hcd"
+    val prefix = "/trombone/hcd1"
     val locationService = new ZookeeperLocationService()
 
     val connection = HttpConnection(ComponentId("config", ComponentType.Service))
@@ -55,6 +53,8 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
 
     val expectedLocation = HttpLocation(connection, new URI(s"http://$hostname:$port/$prefix"))
     resolvedLocation shouldBe expectedLocation
+
+    locationService.unregister(connection)
   }
 
 
@@ -77,18 +77,19 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     Await.result(register, 5 seconds)
 
     val httpEvent: TrackingEvent = httpProbe.requestNext()
-    val trackedHttpConnection    = httpEvent.asInstanceOf[LocationUpdated].connection
+    val trackedHttpConnection = httpEvent.asInstanceOf[LocationUpdated].connection
     trackedHttpConnection shouldBe connection
 
     val unregister = locationService.unregister(connection)
     Await.result(unregister, 5 seconds)
 
     val httpEvent2: TrackingEvent = httpProbe.requestNext()
-    val trackedHttpConnection2    = httpEvent2.asInstanceOf[LocationRemoved].connection
+    val trackedHttpConnection2 = httpEvent2.asInstanceOf[LocationRemoved].connection
     trackedHttpConnection2 shouldBe connection
 
   }
 
+  import akka.pattern.ask
 
   test("Should register and resolve a actor service") {
     val hostname = "127.0.0.1"
@@ -104,17 +105,17 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     val actorPath = ActorPath.fromString(Serialization.serializedActorPath(actorRef))
     val uri = new URI(actorPath.toString)
     val location = AkkaLocation(connection, uri, actorRef)
-    locationService.register(AkkaRegistration(connection, actorRef))
+    val registrationResult = locationService.register(AkkaRegistration(connection, actorRef))
+    Await.result(registrationResult, 5 seconds)
     val resolvedLocation: Location = locationService.resolve(connection)
     //FIXME assert on equality fails because of actor ref, and actorselection difference
     implicit val timeout = Timeout(5 seconds)
     resolvedLocation match {
       case AkkaLocation(_, _, resolvedActorRef) ⇒ {
-        val response = resolvedActorRef ! "Test Message" //FIXME investigate why 'ask' calls deadlock
-        println(response)
+        val responseF: Unit = resolvedActorRef ! "Test Message" //FIXME investigate why 'ask' calls deadlock
       }
       case _ ⇒ fail()
     }
-    Thread.sleep(1000)
+    locationService.unregister(connection)
   }
 }
