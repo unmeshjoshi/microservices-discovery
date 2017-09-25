@@ -10,9 +10,10 @@ import com.servicediscovery.exceptions.RegistrationFailed
 import com.servicediscovery.models._
 import com.servicediscovery.scaladsl.LocationService
 import com.utils.Networks
+import org.apache.zookeeper.KeeperException.Code
 import org.apache.zookeeper.Watcher.Event.EventType
 import org.apache.zookeeper.ZooDefs.Perms
-import org.apache.zookeeper.data.{ACL, Id}
+import org.apache.zookeeper.data.{ACL, Id, Stat}
 import org.apache.zookeeper.{CreateMode, WatchedEvent, ZooKeeper}
 
 import scala.collection.JavaConverters._
@@ -28,7 +29,7 @@ class ZookeeperLocationService extends LocationService { outer =>
   override def register(registration: Registration): Future[RegistrationResult] = Future {
     val location = registration.location(new Networks().hostname())
     val serviceInstancePath = s"$cswRootPath/${location.connection.name}"
-    val stat = zookeeper.exists(serviceInstancePath, false)
+    val stat = zookeeper.exists(serviceInstancePath, true)
     if (Option(stat) != None) {
       throw RegistrationFailed(registration.connection)
     }
@@ -99,7 +100,14 @@ class ZookeeperLocationService extends LocationService { outer =>
       zookeeper.exists(s"${serviceInstancePath}", watchedEvent ⇒ {
         actorRef ! watchedEvent
         setWatcher(actorRef)
-      })
+      }, (rc: Int, path: String, ctx: Any, stat: Stat) ⇒ {
+
+        Code.get(rc) match {
+          case Code.CONNECTIONLOSS ⇒ setWatcher(actorRef)
+          case _ ⇒ println(stat)
+        }
+
+      }, Nil)
     }
 
     val source: Source[Any, Unit] = Source.actorRef[Any](256, OverflowStrategy.fail).mapMaterializedValue {
