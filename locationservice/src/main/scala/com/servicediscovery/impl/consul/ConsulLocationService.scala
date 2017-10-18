@@ -1,12 +1,16 @@
 package com.servicediscovery.impl.consul
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
+import java.net.URI
 
 import akka.Done
 import akka.actor.ActorSystem
+import akka.stream.{KillSwitches, OverflowStrategy}
+import akka.stream.scaladsl.{Keep, Source}
 import com.ecwid.consul.v1.kv.model.GetBinaryValue
 import com.ecwid.consul.v1.{ConsulClient, QueryParams, Response}
 import com.servicediscovery.exceptions.RegistrationFailed
+import com.servicediscovery.models.Connection.HttpConnection
 import com.servicediscovery.models._
 import com.servicediscovery.scaladsl.LocationService
 import com.utils.Networks
@@ -94,8 +98,11 @@ class ConsulLocationService extends LocationService {
 
   override def list(connectionType: ConnectionType) = ???
 
-  override def track(connection: Connection) = {
-
+  override def track(connection: Connection):akka.stream.scaladsl.Source[com.servicediscovery.models.TrackingEvent, akka.stream.KillSwitch] = {
+    val source = Source.actorRef(100, OverflowStrategy.dropHead).mapMaterializedValue(actorRef ⇒ {
+      actorRef ! LocationUpdated(new HttpLocation(Connection.HttpConnection(ComponentId("test", ComponentType.Service)), new URI("http://localhost:8080")))
+    })
+    source.viaMat(KillSwitches.single)(Keep.right)
   }
 
   override def subscribe(connection: Connection, callback: (TrackingEvent) ⇒ Unit) = ???
