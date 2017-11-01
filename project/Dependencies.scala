@@ -24,6 +24,7 @@ object Dependencies {
     "org.mousio" % "etcd4j" % "2.13.0",
     "com.ecwid.consul" % "consul-api" % "1.2.4",
     "com.coreos" % "jetcd-core" % "0.0.1",
-    "org.testcontainers" % "testcontainers" % "1.4.3"
+    "com.dimafeng" % "testcontainers-scala_2.12" % "0.4.0" % "test" // Scala 2.12.*
+
   )
 }

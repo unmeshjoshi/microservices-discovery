@@ -1,6 +1,7 @@
 package com.servicediscovery.impl.zookeeper
 package servicediscovery
 
+import java.io.File
 import java.net.URI
 
 import akka.actor.{Actor, ActorPath, ActorSystem, Props}
@@ -9,6 +10,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Keep
 import akka.stream.testkit.scaladsl.TestSink
 import akka.util.Timeout
+import com.dimafeng.testcontainers.{DockerComposeContainer, ForAllTestContainer}
 import com.servicediscovery.models.Connection.{AkkaConnection, HttpConnection}
 import com.servicediscovery.models._
 import com.utils.Networks
@@ -45,6 +47,8 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     val port = 9595
     val prefix = "/trombone/hcd1"
 
+    val locationService = new ZookeeperLocationService()
+
     val connection = HttpConnection(ComponentId("config", ComponentType.Service))
     val register = locationService.register(HttpRegistration(connection, port, prefix))
     Await.result(register, 5 seconds)
@@ -65,6 +69,7 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     val prefix = "/trombone/hcd"
 
     val connection = HttpConnection(ComponentId("config1", ComponentType.Service))
+    val locationService = new ZookeeperLocationService()
 
     implicit val actorSystem = ActorSystem()
     implicit val actorMaterialLizer = ActorMaterializer()
@@ -91,6 +96,7 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
   test("Should register and resolve a actor service") {
     val connection = AkkaConnection(ComponentId("config", ComponentType.HCD))
     val actorSystem = ActorSystem("TestSystem")
+    val locationService = new ZookeeperLocationService()
 
     val actorRef = actorSystem.actorOf(Props[TestActor])
     val actorPath = ActorPath.fromString(Serialization.serializedActorPath(actorRef))
@@ -109,7 +115,4 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     }
     locationService.unregister(connection)
   }
-
- val locationService = new ZookeeperLocationService()
-
 }
