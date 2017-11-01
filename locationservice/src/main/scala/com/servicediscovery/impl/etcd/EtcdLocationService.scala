@@ -2,33 +2,30 @@ package com.servicediscovery.impl.etcd
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.net.InetAddress
-import java.util
 
 import akka.Done
 import akka.actor.ActorSystem
-import akka.stream.{Attributes, KillSwitch, OverflowStrategy, SourceShape}
-import akka.stream.scaladsl.Source
-import akka.stream.stage.{GraphStage, GraphStageLogic}
+import akka.stream.KillSwitch
 import com.coreos.jetcd.Client
 import com.coreos.jetcd.data.ByteSequence
-import com.coreos.jetcd.watch.WatchEvent
 import com.servicediscovery.models._
 import com.servicediscovery.scaladsl.LocationService
 import com.utils.Networks
 
 import scala.compat.java8.FutureConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class EtcdLocationService extends LocationService { outer ⇒
+class EtcdLocationService extends LocationService {
+  outer ⇒
   private val actorSystem = ActorSystem("LocationServiceActorSystem")
   private val cswRootPath = "/csw"
 
   val hostIp: InetAddress = new Networks().ipv4Address //get ip address of primary interface.
   def url(hostIp: InetAddress, port: Int) = s"http:/${hostIp}:${port}"
 
-  val etcdClient = Client.builder.endpoints(url(hostIp, 4002), url(hostIp, 4001)).build
+  val etcdClient = Client.builder.endpoints(url(hostIp, 2379), url(hostIp, 2380)).build
 
   def serialize(location: Location) = {
     val stream: ByteArrayOutputStream = new ByteArrayOutputStream()
@@ -51,7 +48,7 @@ class EtcdLocationService extends LocationService { outer ⇒
     val location = registration.location(hostName)
     val kvClient = etcdClient.getKVClient
     val result = kvClient.put(ByteSequence.fromString(serviceInstanceKey(location.connection)),
-    ByteSequence.fromBytes(serialize(location)))
+      ByteSequence.fromBytes(serialize(location)))
     val scalaFuture = result.toScala
     scalaFuture.map(f ⇒ {
       registrationResult(location)
