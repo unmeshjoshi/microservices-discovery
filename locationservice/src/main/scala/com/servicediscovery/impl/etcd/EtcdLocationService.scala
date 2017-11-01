@@ -61,7 +61,14 @@ class EtcdLocationService extends LocationService {
     override def unregister(): Future[Done] = outer.unregister(loc.connection)
   }
 
-  override def unregister(connection: Connection): Future[Done] = ???
+  override def unregister(connection: Connection): Future[Done] = {
+    val kvClient = etcdClient.getKVClient
+    val deleteResponse = kvClient.delete(ByteSequence.fromString(serviceInstanceKey(connection)))
+    val scalaFuture = deleteResponse.toScala
+    scalaFuture.map(f ⇒ {
+      Done
+    })
+  }
 
   override def unregisterAll(): Future[Done] = ???
 
