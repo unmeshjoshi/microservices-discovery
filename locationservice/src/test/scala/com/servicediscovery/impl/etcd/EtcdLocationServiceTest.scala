@@ -27,7 +27,7 @@ class EtcdLocationServiceTest extends FunSuite with Matchers {
     Await.result(resolvedLocation, 1 seconds)
 
     val expectedLocation = HttpLocation(connection, new URI(s"http://$hostname:$port/$prefix"))
-    Await.result(resolvedLocation, 1 second) shouldBe expectedLocation
+    Await.result(resolvedLocation, 1 second).get shouldBe expectedLocation
 
     locationService.unregister(connection)
   }
