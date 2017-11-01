@@ -58,7 +58,7 @@ class EtcdService {
   val hostIp: InetAddress = new Networks().ipv4Address //get ip address of primary interface.
   def url(hostIp: InetAddress, port: Int) = s"http:/${hostIp}:${port}"
 
-  val etcdClient = Client.builder.endpoints(url(hostIp, 4002), url(hostIp, 4001)).build
+  val etcdClient = Client.builder.endpoints(url(hostIp, 2379), url(hostIp, 2380)).build
 
   def watch(key: String): Future[util.List[WatchEvent]] = Future {
     val watchClient = etcdClient.getWatchClient
@@ -92,7 +92,7 @@ class JEtcdRegistration {
     Source.fromGraph(new EtcdWatchingGraphStage).runForeach(watchEvent ⇒ println(s"---------------------------------------------------------------------------------${watchEvent.getEventType}:${watchEvent.getKeyValue.getKey}=${watchEvent.getKeyValue.getValue}"))
 
     var i = 0;
-    val etcdClient = Client.builder.endpoints(url(hostIp, 4002), url(hostIp, 4001)).build
+    val etcdClient = Client.builder.endpoints(url(hostIp, 2379), url(hostIp, 2380)).build
     while (true) {
       val ip4Address = new Networks().ipv4Address.getHostAddress
       etcdClient.getKVClient.put(ByteSequence.fromString("/skydns/local/skydns/service/account/1"),

@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class ZookeeperLocationService extends LocationService { outer =>
+class ZookeeperLocationService(port:Int = 2181) extends LocationService { outer =>
   private val actorSystem = ActorSystem("LocationServiceActorSystem")
   private val cswRootPath = "/csw"
 
@@ -73,7 +73,7 @@ class ZookeeperLocationService extends LocationService { outer =>
   }
 
   val watcher = new LocationWatcher
-  val zookeeper = new ZooKeeper("localhost:2181", 60 * 1000, watcher)
+  val zookeeper = new ZooKeeper(s"localhost:${port}", 60 * 1000, watcher)
   val zkId: Id = new Id("world", "anyone");
   val acl = new ACL(Perms.ALL, zkId)
   val aclList = List[_root_.org.apache.zookeeper.data.ACL](acl)

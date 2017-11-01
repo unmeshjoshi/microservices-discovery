@@ -12,12 +12,13 @@ import akka.util.Timeout
 import com.servicediscovery.models.Connection.{AkkaConnection, HttpConnection}
 import com.servicediscovery.models._
 import com.utils.Networks
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 object TestFutureExtension {
+
 
   implicit class RichFuture[T](val f: Future[T]) extends AnyVal {
     def await: T = Await.result(f, 20.seconds)
@@ -37,13 +38,12 @@ class TestActor() extends Actor {
   }
 }
 
-class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeAndAfter {
+class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeAndAfterAll{
 
   test("Should register and resolve a http service") {
     val hostname = new Networks().hostname()
     val port = 9595
     val prefix = "/trombone/hcd1"
-    val locationService = new ZookeeperLocationService()
 
     val connection = HttpConnection(ComponentId("config", ComponentType.Service))
     val register = locationService.register(HttpRegistration(connection, port, prefix))
@@ -63,7 +63,6 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     val hostname = "127.0.0.1"
     val port = 9595
     val prefix = "/trombone/hcd"
-    val locationService = new ZookeeperLocationService()
 
     val connection = HttpConnection(ComponentId("config1", ComponentType.Service))
 
@@ -89,16 +88,8 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
 
   }
 
-  import akka.pattern.ask
-
   test("Should register and resolve a actor service") {
-    val hostname = "127.0.0.1"
-    val port = 9595
-    val prefix = "/trombone/hcd"
-    val locationService = new ZookeeperLocationService()
-
     val connection = AkkaConnection(ComponentId("config", ComponentType.HCD))
-
     val actorSystem = ActorSystem("TestSystem")
 
     val actorRef = actorSystem.actorOf(Props[TestActor])
@@ -118,4 +109,7 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     }
     locationService.unregister(connection)
   }
+
+ val locationService = new ZookeeperLocationService()
+
 }

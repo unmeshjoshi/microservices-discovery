@@ -1,0 +1,40 @@
+version: '3'
+services:
+  seed:
+    image: consul
+    restart: always
+    ports:
+      - "2379:2379"
+      - "8501:8500"
+    hostname: "seed"
+    command: "consul agent -server -ui -bootstrap-expect 3 -log-level DEBUG -data-dir /tmp/consuldata -disable-host-node-id -client 0.0.0.0"
+  consul-server2:
+    image: consul
+    restart: always
+    depends_on:
+      - seed
+    hostname: "consul-server2"
+    ports:
+      - "2380:2379"
+      - "8502:8500"
+    command: "consul agent -server -ui -log-level DEBUG -data-dir /tmp/consuldata -join seed -disable-host-node-id -client 0.0.0.0"
+  consul-server3:
+    image: consul
+    restart: always
+    depends_on:
+      - seed
+    hostname: "consul-server3"
+    ports:
+      - "2381:2379"
+      - "8503:8500"
+    command: "consul agent -server -ui -log-level DEBUG -data-dir /tmp/consuldata -join seed -disable-host-node-id -client 0.0.0.0"
+  consul-agent1:
+    image: consul
+    restart: always
+    depends_on:
+      - seed
+    hostname: "consul-agent1"
+    ports:
+      - "2382:2379"
+      - "8504:8500"
+    command: "consul agent -ui -log-level DEBUG -data-dir /tmp/consuldata -join seed -disable-host-node-id -client 0.0.0.0"

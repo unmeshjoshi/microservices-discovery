@@ -12,7 +12,7 @@ object ConsulRegistration extends App {
   private def serviceRegisterTest(): Unit = {
 
     new Thread(() => {
-      val consulClient = new ConsulClient("172.17.0.4", 8500)
+      val consulClient = new ConsulClient("localhost", 8504)
       def foo() = {
         val waitTime = 1000
         val queryParams = new QueryParams(waitTime, 0)
@@ -37,7 +37,7 @@ object ConsulRegistration extends App {
     val newService = new NewService
     val serviceName = "test3"
     newService.setName(serviceName)
-    val consulClient = new ConsulClient("127.0.0.1", 8500)
+    val consulClient = new ConsulClient("localhost", 8504)
     consulClient.agentServiceRegister(newService)
     val agentServicesResponse = consulClient.getAgentServices
     val services = agentServicesResponse.getValue

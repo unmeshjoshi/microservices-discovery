@@ -21,7 +21,5 @@ object Settings {
     scalacOptions ++= Seq("-encoding", "UTF-8", "-feature", "-deprecation", "-unchecked"),
     javacOptions in(Compile, compile) ++= Seq("--add-modules","java.xml.bind","-source", "9", "-target", "9", "-Xlint:unchecked", "-Xlint:deprecation"),
     javaOptions in(Test, run) ++= Seq("-Djava.net.preferIPv4Stack=true") // For location service use
-
   )
-
 }

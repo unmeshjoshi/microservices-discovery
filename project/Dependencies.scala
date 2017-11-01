@@ -23,6 +23,7 @@ object Dependencies {
     "org.apache.zookeeper" % "zookeeper" % "3.5.3-beta",
     "org.mousio" % "etcd4j" % "2.13.0",
     "com.ecwid.consul" % "consul-api" % "1.2.4",
-    "com.coreos" % "jetcd-core" % "0.0.1"
+    "com.coreos" % "jetcd-core" % "0.0.1",
+    "org.testcontainers" % "testcontainers" % "1.4.3"
   )
 }
