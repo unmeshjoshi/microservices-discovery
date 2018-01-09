@@ -10,11 +10,12 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Keep
 import akka.stream.testkit.scaladsl.TestSink
 import akka.util.Timeout
-import com.dimafeng.testcontainers.{DockerComposeContainer, ForAllTestContainer}
 import com.servicediscovery.models.Connection.{AkkaConnection, HttpConnection}
 import com.servicediscovery.models._
 import com.utils.Networks
+import org.junit.runner.Description
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers}
+import org.testcontainers.containers.{DockerComposeContainer, FailureDetectingExternalResource}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -40,7 +41,9 @@ class TestActor() extends Actor {
   }
 }
 
-class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeAndAfterAll{
+import org.testcontainers.containers.{BindMode, GenericContainer => OTCGenericContainer}
+
+class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeAndAfterAll {
 
   test("Should register and resolve a http service") {
     val hostname = new Networks().hostname()
@@ -115,4 +118,9 @@ class ZookeeperServiceDiscoveryTests extends FunSuite with Matchers with BeforeA
     }
     locationService.unregister(connection)
   }
+//  val container:OTCContainer = new DockerComposeContainer(new File(getClass().getResource("/docker-compose-zookeeper.yml").getFile)).withLocalCompose(true)
+}
+
+object ZookeeperServiceDiscoveryTests {
+
 }
